@@ -101,26 +101,32 @@ class SettingsTableViewController: UITableViewController, UIPopoverPresentationC
         }
         updateViews()
         saveSettings()
+        
+        NotificationCenter.default.post(name: NSNotification.Name(rawValue: "load"), object: nil)
     }
     
     @IBAction func snoozeLengthChanged(_ sender: Any) {
-        //if((self.settings?.snoozeLength)! < 15){
-            self.settings?.snoozeLength = Int32(self.snoozeLengthStepper.value)
-            updateViews()
-            saveSettings()
-        //}
+        self.settings?.snoozeLength = Int32(self.snoozeLengthStepper.value)
+        updateViews()
+        saveSettings()
+        
+        (UIApplication.shared.delegate as! AppDelegate).rescheduleAllNotifications()
     }
     
     @IBAction func maxSnoozesChanged(_ sender: Any) {
         self.settings?.snoozeAmount = Int32(self.maxSnoozesStepper.value)
         updateViews()
         saveSettings()
+        
+        (UIApplication.shared.delegate as! AppDelegate).rescheduleAllNotifications()
     }
     
     @IBAction func snoozeSwitchChanged(_ sender: Any) {
         self.settings?.snoozeOn = self.snoozeSwitch.isOn
         updateViews()
         saveSettings()
+        
+        (UIApplication.shared.delegate as! AppDelegate).rescheduleAllNotifications()
     }
     
     @IBAction func volumeSliderChanged(_ sender: Any) {
@@ -208,7 +214,16 @@ class SettingsTableViewController: UITableViewController, UIPopoverPresentationC
                 controller.popoverPresentationController!.sourceView = self.view
                 controller.popoverPresentationController!.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.midY-40, width: 0, height: 0)
                 controller.popoverPresentationController!.permittedArrowDirections = UIPopoverArrowDirection(rawValue: 0)
-                controller.preferredContentSize = CGSize(width: 260, height: 270)
+                controller.preferredContentSize = CGSize(width: 260, height: 260)
+                
+            }
+        case "selectAlertSound":
+            if let controller = segue.destination as? SelectAlertSoundViewController {
+                controller.popoverPresentationController!.delegate = self
+                controller.popoverPresentationController!.sourceView = self.view
+                controller.popoverPresentationController!.sourceRect = CGRect(x: self.view.bounds.midX-100, y: self.view.bounds.midY-50, width: 0, height: 0)
+                controller.popoverPresentationController!.permittedArrowDirections = UIPopoverArrowDirection(rawValue: 0)
+                controller.preferredContentSize = CGSize(width: 450, height: 470)
                 
             }
         default:

@@ -9,6 +9,7 @@
 import UIKit
 import CoreData
 import UserNotifications
+import AVFoundation
 
 class AlertPopupViewController: UIViewController {
     
@@ -22,6 +23,8 @@ class AlertPopupViewController: UIViewController {
     
     var alertID: String?
     var alert: Alert?
+    
+    var player: AVAudioPlayer?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -43,6 +46,8 @@ class AlertPopupViewController: UIViewController {
                 }
             }
             
+            
+            
             do{
                 let alertRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "Alert")
                 alertRequest.predicate = NSPredicate(format: "id == %@", id)
@@ -55,7 +60,14 @@ class AlertPopupViewController: UIViewController {
                     self.titleLabel.text = alert?.title
                     
                     let dateFormatter = DateFormatter()
-                    dateFormatter.dateFormat = "HH:mm"
+                    var dateFormat = ""
+                    
+                    if((UIApplication.shared.delegate as! AppDelegate).getSettings().hourMode == "24"){
+                        dateFormat = "HH:mm"
+                    }else{
+                        dateFormat = "hh:mm a"
+                    }
+                    dateFormatter.dateFormat = dateFormat
                     let time = dateFormatter.string(from: alert?.time! as! Date)
                     
                     self.timeLabel.text = time
@@ -64,6 +76,8 @@ class AlertPopupViewController: UIViewController {
             }catch{
                 print(error)
             }
+            playSound()
+            changeSnoozeButtonState()
         }
         
         // Do any additional setup after loading the view.
@@ -74,6 +88,59 @@ class AlertPopupViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
     
+    func playSound() {
+        let alertSound = (UIApplication.shared.delegate as! AppDelegate).getSettings().alertSound
+        let url = Bundle.main.url(forResource: alertSound, withExtension: "wav")!
+        
+        do {
+            player = try AVAudioPlayer(contentsOf: url)
+            guard let player = player else { return }
+            
+            player.prepareToPlay()
+            player.play()
+            player.volume = Float((UIApplication.shared.delegate as! AppDelegate).getSettings().soundVolume)
+            player.numberOfLoops = -1
+        } catch let error {
+            print(error.localizedDescription)
+        }
+    }
+    
+    func stopSound(){
+        if let avplayer = player{
+            if(avplayer.isPlaying){
+                avplayer.pause()
+                avplayer.currentTime = 0
+                
+            }
+        }
+    }
+    
+    func changeSnoozeButtonState(){
+        let snoozeEnabled = (UIApplication.shared.delegate as! AppDelegate).getSettings().snoozeOn
+        let maxSnoozes = (UIApplication.shared.delegate as! AppDelegate).getSettings().snoozeAmount
+        
+        if(snoozeEnabled){
+            if let id = self.alertID{
+                if(id.contains("snooze")){
+                    let idSplit = id.components(separatedBy: "_")
+                    let currentSnoozes = Int(idSplit[2])
+                    
+                    if(currentSnoozes! < Int(maxSnoozes)){
+                        self.snoozeButton.isEnabled = true
+                    }else{
+                        self.snoozeButton.isEnabled = false
+                    }
+                }else{
+                    self.snoozeButton.isEnabled = true
+                }
+            }
+            
+        }else{
+            self.snoozeButton.isEnabled = false
+        }
+        
+        print(self.snoozeButton.isEnabled)
+    }
 
     /*
     // MARK: - Navigation
@@ -88,41 +155,54 @@ class AlertPopupViewController: UIViewController {
     //MARK: Actions
     @IBAction func snoozeClicked(_ sender: UIButton) {
         //Remember to cancel stuff here
-        
+        stopSound()
         scheduleNooze()
         self.dismiss(animated: true, completion: nil)
     }
     
     private func scheduleNooze(){
-        let currenttime = Date()
-        let calendar = Calendar(identifier: .gregorian)
-        let components = calendar.dateComponents(in: .current, from: currenttime)
-        
-        //fetch snooze length
-        
-        //Change to 5
-        let newComponents = DateComponents(calendar: calendar, timeZone: .current, month: components.month, day: components.day, hour: components.hour, minute: components.minute!+1)
-        
-        let trigger = UNCalendarNotificationTrigger(dateMatching: newComponents, repeats: false)
-        
-        let id = (self.alert?.id!)! + "_snooze"
-        print(id)
-        //Fetch sound
-        
-        let content = UNMutableNotificationContent()
-        let title = self.alert?.title ?? " "
-        content.title = title
-        content.body = "Alert triggered."
-        content.sound = UNNotificationSound.default()
-        
-        let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
-        
-        UNUserNotificationCenter.current().add(request) {(error) in
-            if let error = error {
-                print("error: \(error)")
+        do{
+            //Getting sound and snooze length from settings
+            let soundName = (UIApplication.shared.delegate as! AppDelegate).getSettings().alertSound!
+            let sound = UNNotificationSound.init(named: soundName+".wav")
+            let snoozeLength = (UIApplication.shared.delegate as! AppDelegate).getSettings().snoozeLength
+            
+            let currenttime = Date()
+            let calendar = Calendar(identifier: .gregorian)
+            let components = calendar.dateComponents(in: .current, from: currenttime)
+            
+            let newComponents = DateComponents(calendar: calendar, timeZone: .current, month: components.month, day: components.day, hour: components.hour, minute: components.minute!+Int(snoozeLength))
+            
+            let trigger = UNCalendarNotificationTrigger(dateMatching: newComponents, repeats: false)
+            
+            var snoozeCounter = 0
+            if(self.alertID?.contains("snooze"))!{
+                let currentSnoozeCount = Int((self.alertID?.components(separatedBy: "_")[2])!)
+                snoozeCounter = currentSnoozeCount! + 1
+            }else{
+                snoozeCounter = 1
             }
+            
+            let id = (self.alert?.id!)! + "_snooze_\(snoozeCounter)"
+            print(id)
+            
+            let content = UNMutableNotificationContent()
+            let title = self.alert?.title ?? " "
+            content.title = title
+            content.body = "Alert triggered."
+            content.sound = sound
+            
+            let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
+            
+            UNUserNotificationCenter.current().add(request) {(error) in
+                if let error = error {
+                    print("error: \(error)")
+                }
+            }
+            
+            print("Snooze for \(id) scheduled")
+        }catch{
+            print(error)
         }
-        
-        print("Snooze for \(id) scheduled")
     }
 }

@@ -28,6 +28,15 @@ class AlertTableViewController: UITableViewController, NSFetchedResultsControlle
             print("An error occurred")
             
         }
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(loadList), name: NSNotification.Name(rawValue: "load"), object: nil)
+        
+    }
+    
+    //Can be used to reload tableview from outside, e.g when settings change
+    func loadList(){
+        print("didChange")
+        self.alertTableView.reloadData()
     }
 
     //MARK: Fetched Result Controller setup
@@ -114,7 +123,17 @@ class AlertTableViewController: UITableViewController, NSFetchedResultsControlle
         }
         
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "HH:mm"
+        var dateFormat = ""
+        
+        if((UIApplication.shared.delegate as! AppDelegate).getSettings().hourMode == "24"){
+            dateFormat = "HH:mm"
+            cell.timeLabel.font = UIFont.systemFont(ofSize: 26.0)
+        }else{
+            dateFormat = "hh:mm a"
+            cell.timeLabel.font = UIFont.boldSystemFont(ofSize: 18.0)
+        }
+        dateFormatter.dateFormat = dateFormat
+        
         let time = dateFormatter.string(from: alert.time! as Date)
         
         cell.timeLabel.text = time
@@ -152,32 +171,13 @@ class AlertTableViewController: UITableViewController, NSFetchedResultsControlle
             }
         } else { //One time alert
             cell.stackView.isHidden = true
-            dateFormatter.dateFormat = "dd MMM yyyy"
+            dateFormatter.dateFormat = (UIApplication.shared.delegate as! AppDelegate).getSettings().dateFormat
             let date = dateFormatter.string(from: alert.time! as Date)
             
             cell.dayLabels[0].text = date
             cell.dayLabels[0].font = UIFont.systemFont(ofSize: 12)
             cell.dayLabels[0].textColor = UIColor.black
         }
-        /*
-        cell.layer.borderColor = UIColor.blue.cgColor
-        cell.layer.borderWidth = 1 */
-        
-        /*
-        if(!alert.isEnabled){
-            let disabledColor = UIColor.init(colorLiteralRed: 131, green: 133, blue: 136, alpha: 1)
-            let disabledBG = UIColor.init(colorLiteralRed: 203, green: 204, blue: 205, alpha: 1)
-            
-            cell.backgroundView?.backgroundColor = disabledBG
-            cell.timeLabel.textColor = disabledColor
-            cell.titleLabel.textColor = disabledColor
-            for day in cell.dayLabels{
-                day.textColor = disabledColor
-            }
-            
-            
-        }
-        */
         
         return cell
     }
@@ -323,7 +323,7 @@ class AlertTableViewController: UITableViewController, NSFetchedResultsControlle
     
     //MARK: Popover
     func popoverPresentationControllerDidDismissPopover(_ popoverPresentationController: UIPopoverPresentationController) {
-        //do som stuff from the popover
+        
     }
     
     func adaptivePresentationStyle(for controller: UIPresentationController, traitCollection: UITraitCollection) -> UIModalPresentationStyle {

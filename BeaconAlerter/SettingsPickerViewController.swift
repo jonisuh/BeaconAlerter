@@ -85,6 +85,9 @@ class SettingsPickerViewController: UIViewController, UIPickerViewDataSource, UI
         
         parent.settings?.dateFormat = selectedDateFormat
         parent.returnFromPopover()
+        
+        NotificationCenter.default.post(name: NSNotification.Name(rawValue: "load"), object: nil)
+        
         self.dismiss(animated: true, completion: nil)
     }
     

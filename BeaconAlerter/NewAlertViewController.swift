@@ -64,6 +64,14 @@ class NewAlertViewController: UIViewController, UITextFieldDelegate {
     }
 
     func createAlertModeViews(repeating: Bool){
+        if((UIApplication.shared.delegate as! AppDelegate).getSettings().hourMode == "24"){
+            oneTimeDatePicker.locale = Locale.init(identifier: "en_GB")
+            repeatingTimePicker.locale = Locale.init(identifier: "en_GB")
+        }else{
+            oneTimeDatePicker.locale = Locale.init(identifier: "en_US")
+            repeatingTimePicker.locale = Locale.init(identifier: "en_US")
+        }
+        
         if(repeating){
             repeatingView.isHidden = !showRepeating
             onetimeView.isHidden = showRepeating

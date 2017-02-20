@@ -102,13 +102,24 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     
     private func initializeSettingsSingleton(){
         do{
-            let settings = Settings.createSettings(hourMode: "24", dateFormat: "dd MMM yyyy", snoozeOn: true, snoozeLength: 5, snoozeAmount: 1, alertSound: "Default", soundVolume: 1.0, automaticSync: true, context: self.container.viewContext)
+            let settings = Settings.createSettings(hourMode: "24", dateFormat: "dd MMM yyyy", snoozeOn: true, snoozeLength: 5, snoozeAmount: 1, alertSound: "clock", soundVolume: 1.0, automaticSync: true, context: self.container.viewContext)
             print("Settings initialized")
             
             try self.container.viewContext.save()
         }catch{
             print(error)
         }
+    }
+    
+    func getSettings() -> Settings{
+        do{
+            let settingsRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "Settings")
+            return (try self.container.viewContext.fetch(settingsRequest) as! [Settings])[0]
+        }catch{
+            print(error)
+        }
+        //returns empty settings
+        return Settings()
     }
 
     func applicationWillResignActive(_ application: UIApplication) {
@@ -135,18 +146,25 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     
     //MARK: Notifications
     func scheduleNotification(alert: Alert) {
+
+        
         let calendar = Calendar(identifier: .gregorian)
         let components = calendar.dateComponents(in: .current, from: alert.time! as Date)
         
         func addNotificationToCenter(notificationTrigger: UNCalendarNotificationTrigger, id: String){
+                
+            let soundName = getSettings().alertSound!
+            let sound = UNNotificationSound.init(named: soundName+".wav")
+
             print("adding")
             print(notificationTrigger.nextTriggerDate() ?? "Trigger date not found")
+            
             let content = UNMutableNotificationContent()
             content.title = alert.title!
             content.body = "Alert triggered."
-            content.sound = UNNotificationSound.default()
+            content.sound = sound
             
-            var request = UNNotificationRequest(identifier: id, content: content, trigger: notificationTrigger)
+            let request = UNNotificationRequest(identifier: id, content: content, trigger: notificationTrigger)
             
             UNUserNotificationCenter.current().add(request) {(error) in
                 if let error = error {
@@ -246,17 +264,132 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     
     //Reschedules all alert notifications
     func rescheduleAllNotifications(){
-        do{
-            let alertRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "Alert")
-            let alerts = try self.container.viewContext.fetch(alertRequest) as! [Alert]
             
-            for alert in alerts{
-                rescheduleNotification(alert: alert)
-            }
-            
-        }catch{
-            print(error)
+            UNUserNotificationCenter.current().getPendingNotificationRequests(completionHandler: { requests in
+                do{
+                    let settingsRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "Settings")
+                    let settings = (try self.container.viewContext.fetch(settingsRequest) as! [Settings])[0]
+                    
+                    let soundName = settings.alertSound!
+                    print(soundName)
+                    let sound = UNNotificationSound.init(named: soundName+".wav")
+                    
+                    for request in requests{
+                        if(request.identifier.contains("snooze") && self.getSettings().snoozeOn){
+                            var idSplit = request.identifier.components(separatedBy: "_")
+                            let id = idSplit[0]
+                            let currentSnoozeCount = Int(idSplit[2])
+                            
+                            
+                            let alertRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "Alert")
+                            alertRequest.predicate = NSPredicate(format: "id == %@", id)
+                            let alerts = try self.container.viewContext.fetch(alertRequest) as! [Alert]
+                            
+                            if(alerts.count == 1){
+                                let alert = alerts[0]
+                                
+                                let trigger = request.trigger as! UNCalendarNotificationTrigger
+                                
+                                let calendar = Calendar(identifier: .gregorian)
+                                let components = calendar.dateComponents(in: .current, from: alert.time! as Date)
+                                
+                                var newHours = components.hour!
+                                var newMinutes = components.minute!
+                                
+                                let snoozeMinutes = currentSnoozeCount! * Int(settings.snoozeLength)
+                                let snoozePlusOriginal = newMinutes + snoozeMinutes
+                                
+                                if(snoozePlusOriginal > 60){
+                                    newHours = newHours + 1
+                                    newMinutes = snoozePlusOriginal - 60
+                                }else{
+                                    newMinutes = snoozePlusOriginal
+                                }
+                                
+                                var newComponents = DateComponents()
+                                newComponents.minute = newMinutes
+                                newComponents.hour = newHours
+                                newComponents.calendar = trigger.dateComponents.calendar
+                                newComponents.timeZone = trigger.dateComponents.timeZone
+                                newComponents.day = trigger.dateComponents.day
+                                newComponents.month = trigger.dateComponents.month
+                                newComponents.year = trigger.dateComponents.year
+                                
+                                let newTrigger = UNCalendarNotificationTrigger(dateMatching: newComponents, repeats: trigger.repeats)
+                                
+                                let content = UNMutableNotificationContent()
+                                content.title = request.content.title
+                                content.body = "Alert triggered."
+                                content.sound = sound
+                                
+                                let request = UNNotificationRequest(identifier: request.identifier, content: content, trigger: newTrigger)
+                                
+                                UNUserNotificationCenter.current().add(request) {(error) in
+                                    if let error = error {
+                                        print("error: \(error)")
+                                    }
+                                }
+                            }
+                            
+                        }else{
+                            let trigger = request.trigger
+                            let content = UNMutableNotificationContent()
+                            content.title = request.content.title
+                            content.body = "Alert triggered."
+                            content.sound = sound
+                            
+                            let request = UNNotificationRequest(identifier: request.identifier, content: content, trigger: trigger)
+                            
+                            UNUserNotificationCenter.current().add(request) {(error) in
+                                if let error = error {
+                                    print("error: \(error)")
+                                }
+                            }
+                        }
+                    }
+                    
+                    
+                }catch{
+                    print(error)
+                }
+            })
+        
+    }
+    
+    func alertCanBeScheduled(alertsRequired: Int) -> Bool{
+        let currentCount = getRequiredNotificationCount()
+        
+        //Current + required + snooze
+        if((currentCount + alertsRequired + 1 ) <= 64){
+            return true
+        }else{
+            return false
         }
+        
+    }
+    
+    func getRequiredNotificationCount() -> Int{
+        let semaphore = DispatchSemaphore(value: 0)
+        var count = 0
+        UNUserNotificationCenter.current().getPendingNotificationRequests(completionHandler: { requests in
+            for request in requests{
+                if(!request.identifier.contains("snooze")){
+                    count += 1
+                }
+            }
+            do{
+                let alertRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "Alert")
+                let alerts = try self.container.viewContext.fetch(alertRequest) as! [Alert]
+                
+                count += alerts.count
+                
+            }catch{
+                print(error)
+            }
+            semaphore.signal()
+        })
+        _ = semaphore.wait(timeout: DispatchTime.distantFuture)
+        return count
     }
 }
 
