@@ -214,7 +214,7 @@ class SettingsTableViewController: UITableViewController, UIPopoverPresentationC
                 controller.popoverPresentationController!.sourceView = self.view
                 controller.popoverPresentationController!.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.midY-40, width: 0, height: 0)
                 controller.popoverPresentationController!.permittedArrowDirections = UIPopoverArrowDirection(rawValue: 0)
-                controller.preferredContentSize = CGSize(width: 260, height: 260)
+                controller.preferredContentSize = CGSize(width: 260, height: 270)
                 
             }
         case "selectAlertSound":

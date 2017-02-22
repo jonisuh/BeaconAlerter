@@ -360,6 +360,8 @@ class AlertTableViewController: UITableViewController, NSFetchedResultsControlle
         }else{
             (UIApplication.shared.delegate as! AppDelegate).cancelNotification(alert: alert)
         }
+        
+        (UIApplication.shared.delegate as! AppDelegate).updateAlertInServer(alert: alert)
     }
     
 }

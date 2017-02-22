@@ -210,7 +210,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
                     newComponents = DateComponents()
                     newComponents.hour = components.hour
                     newComponents.minute = components.minute
-                    newComponents.weekday = i+2
+                    
+                    //converting 0-6 weekdays into DateComponents weekday format
+                    if(i != 6){
+                        newComponents.weekday = i+2
+                    }else{
+                        newComponents.weekday = 1
+                    }
+                    
                     newComponents.timeZone = .current
                     trigger = UNCalendarNotificationTrigger(dateMatching: newComponents, repeats: true)
                     
@@ -409,15 +416,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         let session = URLSession(configuration: URLSessionConfiguration.default)
         session.dataTask(with: request, completionHandler: {( data, response, error) in
             if let httpResponse = response as? HTTPURLResponse{
+                print("Posted alert \(alert.id!) to server with code: \(httpResponse.statusCode)")
                 if let error = error {
-                    // handle error situation
-                    print(httpResponse.statusCode)
                     print(error)
-                } else {
-                    // now we have valid response & data
-                    print(httpResponse.statusCode)
-                    //let datastring = String(data: data!, encoding: .utf8)!
-                    //print(datastring)
                 }
             }
         }).resume()
@@ -451,15 +452,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
             let session = URLSession(configuration: URLSessionConfiguration.default)
             session.dataTask(with: request, completionHandler: {( data, response, error) in
                 if let httpResponse = response as? HTTPURLResponse{
+                    print("Posted all alerts to server with code: \(httpResponse.statusCode)")
                     if let error = error {
-                        // handle error situation
-                        print(httpResponse.statusCode)
                         print(error)
-                    } else {
-                        // now we have valid response & data
-                        print(httpResponse.statusCode)
-                        //let datastring = String(data: data!, encoding: .utf8)!
-                        //print(datastring)
                     }
                 }
             }).resume()
@@ -484,15 +479,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         let session = URLSession(configuration: URLSessionConfiguration.default)
         session.dataTask(with: request, completionHandler: {( data, response, error) in
             if let httpResponse = response as? HTTPURLResponse{
+                print("Deleted alert \(alert.id!) from server with code: \(httpResponse.statusCode)")
                 if let error = error {
-                    // handle error situation
-                    print(httpResponse.statusCode)
                     print(error)
-                } else {
-                    // now we have valid response & data
-                    print(httpResponse.statusCode)
-                    //let datastring = String(data: data!, encoding: .utf8)!
-                    //print(datastring)
                 }
             }
         }).resume()
@@ -514,15 +503,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         let session = URLSession(configuration: URLSessionConfiguration.default)
         session.dataTask(with: request, completionHandler: {( data, response, error) in
             if let httpResponse = response as? HTTPURLResponse{
+                print("Updated alert \(alert.id!) in server with code: \(httpResponse.statusCode)")
                 if let error = error {
-                    // handle error situation
-                    print(httpResponse.statusCode)
                     print(error)
-                } else {
-                    // now we have valid response & data
-                    print(httpResponse.statusCode)
-                    //let datastring = String(data: data!, encoding: .utf8)!
-                    //print(datastring)
                 }
             }
         }).resume()
@@ -550,15 +533,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         let session = URLSession(configuration: URLSessionConfiguration.default)
         session.dataTask(with: request, completionHandler: {( data, response, error) in
             if let httpResponse = response as? HTTPURLResponse{
+                print("Posted settings to server with code: \(httpResponse.statusCode)")
                 if let error = error {
-                    // handle error situation
-                    print(httpResponse.statusCode)
                     print(error)
-                } else {
-                    // now we have valid response & data
-                    print(httpResponse.statusCode)
-                    //let datastring = String(data: data!, encoding: .utf8)!
-                    //print(datastring)
                 }
             }
         }).resume()
@@ -570,7 +547,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     func generateJSON(dict: [String: Any]) ->Data?{
         do{
             let jsonData = try JSONSerialization.data(withJSONObject: dict)
-            print(String(data: jsonData, encoding: .utf8)!)
+            //print(String(data: jsonData, encoding: .utf8)!)
             
             return jsonData
         }catch{
