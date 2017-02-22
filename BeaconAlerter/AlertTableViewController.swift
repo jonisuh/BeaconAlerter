@@ -219,7 +219,7 @@ class AlertTableViewController: UITableViewController, NSFetchedResultsControlle
             }
             //Removing all notifications this application has
             (UIApplication.shared.delegate as! AppDelegate).cancelNotification(alert: alertToDelete)
-            
+            (UIApplication.shared.delegate as! AppDelegate).deleteAlertFromServer(alert: alertToDelete)
             do {
                 try self.context.save()
             } catch {

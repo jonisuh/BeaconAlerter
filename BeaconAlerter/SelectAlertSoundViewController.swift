@@ -29,7 +29,6 @@ class SelectAlertSoundViewController: UIViewController, UITableViewDelegate, UIT
         self.sounds = [String]()
         while let element = enumerator?.nextObject() as? String {
             if (element.hasSuffix(".wav")) {
-                print(element)
                 self.sounds?.append(element.components(separatedBy: ".")[0])
             }
             

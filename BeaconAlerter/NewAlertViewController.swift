@@ -207,6 +207,15 @@ class NewAlertViewController: UIViewController, UITextFieldDelegate {
             }
             
             try context.save()
+            
+            if((UIApplication.shared.delegate as! AppDelegate).getSettings().automaticSync){
+                if(alertToBeEdited != nil){
+                    (UIApplication.shared.delegate as! AppDelegate).updateAlertInServer(alert: alert)
+                }else{
+                    (UIApplication.shared.delegate as! AppDelegate).postAlertToServer(alert: alert)
+                }
+            }
+            
             self.dismiss(animated: true, completion: nil)
         }catch{
             print("Something went wrong with saving new alert")

@@ -22,6 +22,10 @@ class MoreActionsViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
     
+    @IBAction func syncButtonClicked(_ sender: Any) {
+        (UIApplication.shared.delegate as! AppDelegate).postAlertsToServer()
+        
+    }
 
     @IBAction func settingsButtonClicked(_ sender: UIButton) {
         let delegate = self.popoverPresentationController!.delegate as? AlertTableViewController

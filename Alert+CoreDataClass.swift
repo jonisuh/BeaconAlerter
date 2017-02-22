@@ -84,4 +84,20 @@ public class Alert: NSManagedObject {
         }
         return ""
     }
+    
+    static func stringToDate(date: String) -> Date {
+        let formatter = DateFormatter()
+        
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:SSSZ"
+        
+        return formatter.date(from: date)!
+    }
+    
+    static func dateToString(date: Date) -> String {
+        let formatter = DateFormatter()
+        
+        //formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:SSSZ"
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZZZZZ"
+        return formatter.string(from: date)
+    }
 }

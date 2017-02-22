@@ -234,5 +234,13 @@ class SettingsTableViewController: UITableViewController, UIPopoverPresentationC
         updateViews()
         saveSettings()
     }
+    
+    override func viewWillDisappear(_ animated : Bool) {
+        super.viewWillDisappear(animated)
+        print("Returning from settings")
+        if (self.isMovingFromParentViewController){
+                       (UIApplication.shared.delegate as! AppDelegate).postSettingsToServer()
+        }
+    }
 
 }

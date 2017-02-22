@@ -165,7 +165,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
             content.sound = sound
             
             let request = UNNotificationRequest(identifier: id, content: content, trigger: notificationTrigger)
-            
+
             UNUserNotificationCenter.current().add(request) {(error) in
                 if let error = error {
                     print("error: \(error)")
@@ -391,5 +391,230 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         _ = semaphore.wait(timeout: DispatchTime.distantFuture)
         return count
     }
+    
+    
+    //MARK: Networking - alerts
+    func postAlertToServer(alert: Alert){
+        let urlString = "http://beaconalerter.herokuapp.com/api/alerts"
+        let url = URL(string: urlString)
+        
+        var request = URLRequest(url: url!)
+        request.httpMethod = "POST"
+    
+                
+        let body = generateJSON(dict: getAlertAsDictionary(alert: alert))
+        request.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Content-Type")
+        request.httpBody = body
+        
+        let session = URLSession(configuration: URLSessionConfiguration.default)
+        session.dataTask(with: request, completionHandler: {( data, response, error) in
+            if let httpResponse = response as? HTTPURLResponse{
+                if let error = error {
+                    // handle error situation
+                    print(httpResponse.statusCode)
+                    print(error)
+                } else {
+                    // now we have valid response & data
+                    print(httpResponse.statusCode)
+                    //let datastring = String(data: data!, encoding: .utf8)!
+                    //print(datastring)
+                }
+            }
+        }).resume()
+            
+        
+    }
+    
+    func postAlertsToServer(){
+        let urlString = "http://beaconalerter.herokuapp.com/api/alerts/all"
+        let url = URL(string: urlString)
+        
+        var request = URLRequest(url: url!)
+        request.httpMethod = "POST"
+        
+        do{
+            let alertRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "Alert")
+            let alerts = try self.container.viewContext.fetch(alertRequest) as! [Alert]
+            
+            var alertsDictionaryArray = [[String: Any]]()
+            for alert in alerts{
+                alertsDictionaryArray.append(getAlertAsDictionary(alert: alert))
+            }
+            
+            let json = ["alerts":alertsDictionaryArray]
+            
+            
+            let body = generateJSON(dict: json)
+            request.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Content-Type")
+            request.httpBody = body
+            
+            let session = URLSession(configuration: URLSessionConfiguration.default)
+            session.dataTask(with: request, completionHandler: {( data, response, error) in
+                if let httpResponse = response as? HTTPURLResponse{
+                    if let error = error {
+                        // handle error situation
+                        print(httpResponse.statusCode)
+                        print(error)
+                    } else {
+                        // now we have valid response & data
+                        print(httpResponse.statusCode)
+                        //let datastring = String(data: data!, encoding: .utf8)!
+                        //print(datastring)
+                    }
+                }
+            }).resume()
+            
+        }catch{
+            print(error)
+        }
+        
+    }
+    
+    func getAlertsFromServer(){
+        
+    }
+    
+    func deleteAlertFromServer(alert: Alert){
+        let urlString = "http://beaconalerter.herokuapp.com/api/alerts/"+alert.id!
+        let url = URL(string: urlString)
+        
+        var request = URLRequest(url: url!)
+        request.httpMethod = "DELETE"
+        
+        let session = URLSession(configuration: URLSessionConfiguration.default)
+        session.dataTask(with: request, completionHandler: {( data, response, error) in
+            if let httpResponse = response as? HTTPURLResponse{
+                if let error = error {
+                    // handle error situation
+                    print(httpResponse.statusCode)
+                    print(error)
+                } else {
+                    // now we have valid response & data
+                    print(httpResponse.statusCode)
+                    //let datastring = String(data: data!, encoding: .utf8)!
+                    //print(datastring)
+                }
+            }
+        }).resume()
+    }
+    
+    
+    func updateAlertInServer(alert: Alert){
+        let urlString = "http://beaconalerter.herokuapp.com/api/alerts/"+alert.id!
+        let url = URL(string: urlString)
+        
+        var request = URLRequest(url: url!)
+        request.httpMethod = "PUT"
+        
+        
+        let body = generateJSON(dict: getAlertAsDictionary(alert: alert))
+        request.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Content-Type")
+        request.httpBody = body
+        
+        let session = URLSession(configuration: URLSessionConfiguration.default)
+        session.dataTask(with: request, completionHandler: {( data, response, error) in
+            if let httpResponse = response as? HTTPURLResponse{
+                if let error = error {
+                    // handle error situation
+                    print(httpResponse.statusCode)
+                    print(error)
+                } else {
+                    // now we have valid response & data
+                    print(httpResponse.statusCode)
+                    //let datastring = String(data: data!, encoding: .utf8)!
+                    //print(datastring)
+                }
+            }
+        }).resume()
+    }
+    
+    
+    //MARK: Networking - settings
+    
+    func getSettingsFromServer(){
+        
+    }
+    
+    func postSettingsToServer(){
+        let urlString = "http://beaconalerter.herokuapp.com/api/settings"
+        let url = URL(string: urlString)
+        
+        var request = URLRequest(url: url!)
+        request.httpMethod = "POST"
+        
+        
+        let body = generateJSON(dict: getSettingsAsDictionary())
+        request.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Content-Type")
+        request.httpBody = body
+        
+        let session = URLSession(configuration: URLSessionConfiguration.default)
+        session.dataTask(with: request, completionHandler: {( data, response, error) in
+            if let httpResponse = response as? HTTPURLResponse{
+                if let error = error {
+                    // handle error situation
+                    print(httpResponse.statusCode)
+                    print(error)
+                } else {
+                    // now we have valid response & data
+                    print(httpResponse.statusCode)
+                    //let datastring = String(data: data!, encoding: .utf8)!
+                    //print(datastring)
+                }
+            }
+        }).resume()
+    }
+    
+    
+    //MARK: Networking - JSON generation
+    
+    func generateJSON(dict: [String: Any]) ->Data?{
+        do{
+            let jsonData = try JSONSerialization.data(withJSONObject: dict)
+            print(String(data: jsonData, encoding: .utf8)!)
+            
+            return jsonData
+        }catch{
+            print(error)
+            return nil
+        }
+    }
+    
+    func getAlertAsDictionary(alert: Alert) -> [String: Any]{
+        var alertDays = [String: Bool]()
+        
+        if(alert.repeating){
+            alertDays["mon"] = alert.days?[0]
+            alertDays["tue"] = alert.days?[1]
+            alertDays["wed"] = alert.days?[2]
+            alertDays["thu"] = alert.days?[3]
+            alertDays["fri"] = alert.days?[4]
+            alertDays["sat"] = alert.days?[5]
+            alertDays["sun"] = alert.days?[6]
+        }else{
+            alertDays["mon"] = false
+            alertDays["tue"] = false
+            alertDays["wed"] = false
+            alertDays["thu"] = false
+            alertDays["fri"] = false
+            alertDays["sat"] = false
+            alertDays["sun"] = false
+        }
+        let alertDateString = Alert.dateToString(date: alert.time as! Date)
+        
+        let dictionary: [String: Any] = ["time":alertDateString,"title":alert.title ?? " ","days":alertDays,"repeating":alert.repeating,"isEnabled":alert.isEnabled,"id":alert.id ?? ""]
+        
+        return dictionary
+    }
+    
+    func getSettingsAsDictionary() -> [String: Any]{
+        let settings = self.getSettings()
+            
+        let dictionary: [String: Any] = ["alertSound":settings.alertSound!,"hourMode":settings.hourMode!,"snoozeOn":settings.snoozeOn,"snoozeLength":settings.snoozeLength,"snoozeAmount":settings.snoozeAmount,"soundVolume":settings.soundVolume,"automaticSync":settings.automaticSync,"dateFormat":settings.dateFormat]
+        
+        return dictionary
+            
+       
+    }
+
 }
 
