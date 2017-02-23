@@ -65,6 +65,53 @@ public class Alert: NSManagedObject {
             return nil
         }
     }
+    
+    static func createAlertFrom(json: [String: Any], context: NSManagedObjectContext) -> Alert?{
+        //Checking if an alert with this id already exists
+        if let title = json["title"] as? String, let id = json["id"] as? String, let time = json["time"] as? String, let repeating = json["repeating"] as? Bool, let isEnabled = json["isEnabled"] as? Bool, let days = json["days"] as? [String: Bool] {
+            
+            let alertRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "Alert")
+            alertRequest.predicate = NSPredicate(format: "id == %@", id)
+            
+            do {
+                let alerts = try context.fetch(alertRequest) as! [Alert]
+                var alert: Alert
+                
+                //Alert does not exist
+                if(alerts.count == 0){
+                    alert = NSEntityDescription.insertNewObject(forEntityName: "Alert", into: context) as! Alert
+                    alert.id = id
+                }else{
+                //Alert exists
+                    alert = alerts[0]
+                }
+                
+                alert.title = title
+                alert.time = stringToDate(date: time) as NSDate?
+                
+                alert.days = [Bool]()
+                alert.days?.append(days["mon"]!)
+                alert.days?.append(days["tue"]!)
+                alert.days?.append(days["wed"]!)
+                alert.days?.append(days["thu"]!)
+                alert.days?.append(days["fri"]!)
+                alert.days?.append(days["sat"]!)
+                alert.days?.append(days["sun"]!)
+                
+                alert.repeating = repeating
+                alert.isEnabled = isEnabled
+                return alert
+                
+            }catch{
+                print("Error fetching alerts")
+                return nil
+            }
+        }else{
+            print("Invalid data")
+            return nil
+        }
+    }
+    
     //Generates random ID locally
     static func generateID(context: NSManagedObjectContext) -> String{
         let idRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "Alert")
@@ -87,9 +134,10 @@ public class Alert: NSManagedObject {
     
     static func stringToDate(date: String) -> Date {
         let formatter = DateFormatter()
+        print(date)
         
-        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:SSSZ"
-        
+        //formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZZZZZ"
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
         return formatter.date(from: date)!
     }
     

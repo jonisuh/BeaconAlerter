@@ -130,7 +130,7 @@ class AlertTableViewController: UITableViewController, NSFetchedResultsControlle
             cell.timeLabel.font = UIFont.systemFont(ofSize: 26.0)
         }else{
             dateFormat = "hh:mm a"
-            cell.timeLabel.font = UIFont.boldSystemFont(ofSize: 18.0)
+            cell.timeLabel.font = UIFont.boldSystemFont(ofSize: 17.5)
         }
         dateFormatter.dateFormat = dateFormat
         
@@ -217,9 +217,14 @@ class AlertTableViewController: UITableViewController, NSFetchedResultsControlle
                 self.context.delete(alertToDelete)
                 self.alertTableView.deleteRows(at: [indexPath], with: UITableViewRowAnimation.fade)
             }
-            //Removing all notifications this application has
+            //Removing all notifications scheduled from this alert
             (UIApplication.shared.delegate as! AppDelegate).cancelNotification(alert: alertToDelete)
-            (UIApplication.shared.delegate as! AppDelegate).deleteAlertFromServer(alert: alertToDelete)
+            
+            //Delete the alert from the server is automatic sync is on
+            if((UIApplication.shared.delegate as! AppDelegate).getSettings().automaticSync){
+                (UIApplication.shared.delegate as! AppDelegate).deleteAlertFromServer(alert: alertToDelete)
+            }
+            
             do {
                 try self.context.save()
             } catch {
@@ -361,7 +366,9 @@ class AlertTableViewController: UITableViewController, NSFetchedResultsControlle
             (UIApplication.shared.delegate as! AppDelegate).cancelNotification(alert: alert)
         }
         
-        (UIApplication.shared.delegate as! AppDelegate).updateAlertInServer(alert: alert)
+        if((UIApplication.shared.delegate as! AppDelegate).getSettings().automaticSync){
+            (UIApplication.shared.delegate as! AppDelegate).updateAlertInServer(alert: alert)
+        }
     }
     
 }

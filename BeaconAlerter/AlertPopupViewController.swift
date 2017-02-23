@@ -17,10 +17,10 @@ class AlertPopupViewController: UIViewController {
     
     @IBOutlet weak var titleLabel: UILabel!
     @IBOutlet weak var timeLabel: UILabel!
-    @IBOutlet weak var image: UIImageView!
     @IBOutlet weak var descriptionView: UITextView!
     @IBOutlet weak var snoozeButton: UIButton!
     
+    @IBOutlet weak var closeAlertButton: UIButton!
     var alertID: String?
     var alert: Alert?
     
@@ -205,4 +205,26 @@ class AlertPopupViewController: UIViewController {
             print(error)
         }
     }
+    
+    //Closes the alert and removes one time alerts
+    @IBAction func closeAlert(_ sender: Any) {
+        stopSound()
+        
+        if let alertToBeChecked = self.alert{
+            if(!alertToBeChecked.repeating){
+                (UIApplication.shared.delegate as! AppDelegate).cancelNotification(alert: alertToBeChecked)
+                
+                do{
+                    self.context.delete(alertToBeChecked)
+                    try self.context.save()
+                }catch{
+                    print(error)
+                }
+            }
+        }
+        
+        self.dismiss(animated: true, completion: nil)
+    }
+    
+    
 }

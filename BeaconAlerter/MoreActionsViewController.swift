@@ -23,7 +23,9 @@ class MoreActionsViewController: UIViewController {
     }
     
     @IBAction func syncButtonClicked(_ sender: Any) {
-        (UIApplication.shared.delegate as! AppDelegate).postAlertsToServer()
+        self.dismiss(animated: true, completion: {
+            (UIApplication.shared.delegate as! AppDelegate).synchronizeDeviceWithServer(notifyUser: true)
+        })
         
     }
 

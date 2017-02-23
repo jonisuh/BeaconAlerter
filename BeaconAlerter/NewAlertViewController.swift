@@ -208,12 +208,13 @@ class NewAlertViewController: UIViewController, UITextFieldDelegate {
             
             try context.save()
             
-            if(alertToBeEdited != nil){
-                (UIApplication.shared.delegate as! AppDelegate).updateAlertInServer(alert: alert)
-            }else{
-                (UIApplication.shared.delegate as! AppDelegate).postAlertToServer(alert: alert)
+            if((UIApplication.shared.delegate as! AppDelegate).getSettings().automaticSync){
+                if(alertToBeEdited != nil){
+                    (UIApplication.shared.delegate as! AppDelegate).updateAlertInServer(alert: alert)
+                }else{
+                    (UIApplication.shared.delegate as! AppDelegate).postAlertToServer(alert: alert)
+                }
             }
-            
             
             self.dismiss(animated: true, completion: nil)
         }catch{

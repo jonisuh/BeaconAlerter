@@ -39,4 +39,39 @@ public class Settings: NSManagedObject {
             return nil
         }
     }
+    
+    static func settingsHaveChanged(newSettings: [String: Any], oldSettings: Settings) -> Bool{
+        if(oldSettings.hourMode != newSettings["hourMode"] as? String){
+            return true
+        }
+        
+        if(oldSettings.dateFormat != newSettings["dateFormat"] as? String){
+            return true
+        }
+        
+        if(oldSettings.snoozeOn != newSettings["snoozeOn"] as? Bool){
+            return true
+        }
+        
+        if(oldSettings.snoozeLength != newSettings["snoozeLength"] as? Int32){
+            return true
+        }
+        
+        if(oldSettings.snoozeAmount != newSettings["snoozeAmount"] as? Int32){
+            return true
+        }
+        
+        if(oldSettings.soundVolume != newSettings["soundVolume"] as? Double){
+            return true
+        }
+        
+        if(oldSettings.alertSound != newSettings["alertSound"] as? String){
+            return true
+        }
+        
+        if(oldSettings.automaticSync != newSettings["automaticSync"] as? Bool){
+            return true
+        }
+        return false
+    }
 }

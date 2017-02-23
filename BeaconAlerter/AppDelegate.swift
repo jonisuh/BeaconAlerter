@@ -133,7 +133,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     }
 
     func applicationWillEnterForeground(_ application: UIApplication) {
-        // Called as part of the transition from the background to the active state; here you can undo many of the changes made on entering the background.
+        self.synchronizeDeviceWithServer(notifyUser: false)
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
@@ -399,6 +399,40 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         return count
     }
     
+    //MARK: Networking - synchronizing
+    func synchronizeDeviceWithServer(notifyUser: Bool){
+        self.showSyncToUser = notifyUser
+        self.updateSyncAlert(amount: 0)
+        self.getSettingsFromServer()
+        self.getAlertsFromServer()
+    }
+    
+    
+    var alert = UIAlertController()
+    var syncPercentage = 0
+    var showSyncToUser = false
+    func updateSyncAlert(amount: Int){
+        if(showSyncToUser){
+            if(amount == 0){
+                self.alert = UIAlertController(title: "Synchronizing...", message: "", preferredStyle: .alert)
+                
+                self.window?.rootViewController?.present(self.alert, animated: true, completion: nil)
+            }
+            
+            syncPercentage = syncPercentage + amount
+            self.alert.message = "Synchronization at \(syncPercentage)%"
+     
+            if(self.syncPercentage == 100){
+                self.alert.dismiss(animated: false, completion: {
+                    self.syncPercentage = 0
+                    self.alert = UIAlertController(title: "Synchronization", message: "Synchronization complete. Settings and alerts may have been modified on your device during the synchronization.", preferredStyle: .alert)
+                    
+                    self.alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+                    self.window?.rootViewController?.present(self.alert, animated: true, completion: nil)
+                })
+            }
+        }
+    }
     
     //MARK: Networking - alerts
     func postAlertToServer(alert: Alert){
@@ -426,6 +460,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         
     }
     
+    //Posts all alerts to server
     func postAlertsToServer(){
         let urlString = "http://beaconalerter.herokuapp.com/api/alerts/all"
         let url = URL(string: urlString)
@@ -466,7 +501,38 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     }
     
     func getAlertsFromServer(){
+        let urlString = "http://beaconalerter.herokuapp.com/api/alerts/"
+        let url = URL(string: urlString)
         
+        var request = URLRequest(url: url!)
+        request.httpMethod = "GET"
+        
+        let session = URLSession(configuration: URLSessionConfiguration.default)
+        session.dataTask(with: request, completionHandler: {( data, response, error) in
+            if let httpResponse = response as? HTTPURLResponse{
+                print("Queried alerts from server with code: \(httpResponse.statusCode)")
+                if let error = error {
+                    print(error)
+                }else{
+                    do{
+                        DispatchQueue.main.async {self.updateSyncAlert(amount: 15)}
+                        if let alertsDictionary = self.getDictionaryFromJSON(data: data){
+                            for item in alertsDictionary{
+                                if let singleAlertDictionary = item as? [String: Any]{
+                                    Alert.createAlertFrom(json: singleAlertDictionary, context: self.container.viewContext)
+                                }
+                            }
+                            try self.container.viewContext.save()
+                            self.postAlertsToServer()
+                            DispatchQueue.main.async {self.updateSyncAlert(amount: 15)}
+                        }
+                        DispatchQueue.main.async {self.updateSyncAlert(amount: 20)}
+                    }catch{
+                        print(error)
+                    }
+                }
+            }
+        }).resume()
     }
     
     func deleteAlertFromServer(alert: Alert){
@@ -515,7 +581,51 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     //MARK: Networking - settings
     
     func getSettingsFromServer(){
+        let urlString = "http://beaconalerter.herokuapp.com/api/settings/"
+        let url = URL(string: urlString)
         
+        var request = URLRequest(url: url!)
+        request.httpMethod = "GET"
+        
+        let session = URLSession(configuration: URLSessionConfiguration.default)
+        session.dataTask(with: request, completionHandler: {( data, response, error) in
+            if let httpResponse = response as? HTTPURLResponse{
+                print("Queried settings from server with code: \(httpResponse.statusCode)")
+                if let error = error {
+                    print(error)
+                }else{
+                    DispatchQueue.main.async {self.updateSyncAlert(amount: 15)}
+                    if let settingsData = self.getDictionaryFromJSON(data: data){
+                        
+                        for item in settingsData{
+                            
+                            if let settingsDictionary = item as? [String: Any]{
+                                
+                                do{
+                                    let settings = self.getSettings()
+                                    if(Settings.settingsHaveChanged(newSettings: settingsDictionary, oldSettings: settings)){
+                                        settings.alertSound = settingsDictionary["alertSound"] as? String
+                                        settings.soundVolume = (settingsDictionary["soundVolume"] as? Double)!
+                                        settings.snoozeOn = (settingsDictionary["snoozeOn"] as? Bool)!
+                                        settings.snoozeAmount = (settingsDictionary["snoozeAmount"] as? Int32)!
+                                        settings.snoozeLength = (settingsDictionary["snoozeLength"] as? Int32)!
+                                        settings.hourMode = settingsDictionary["hourMode"] as? String
+                                        settings.dateFormat = settingsDictionary["dateFormat"] as? String
+                                        settings.automaticSync = (settingsDictionary["automaticSync"] as? Bool)!
+                                        
+                                        try self.container.viewContext.save()
+                                    }
+                                    DispatchQueue.main.async {self.updateSyncAlert(amount: 15)}
+                                }catch{
+                                    print(error)
+                                }
+                            }
+                        }
+                    }
+                    DispatchQueue.main.async {self.updateSyncAlert(amount: 20)}
+                }
+            }
+        }).resume()
     }
     
     func postSettingsToServer(){
@@ -589,9 +699,20 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         let dictionary: [String: Any] = ["alertSound":settings.alertSound!,"hourMode":settings.hourMode!,"snoozeOn":settings.snoozeOn,"snoozeLength":settings.snoozeLength,"snoozeAmount":settings.snoozeAmount,"soundVolume":settings.soundVolume,"automaticSync":settings.automaticSync,"dateFormat":settings.dateFormat]
         
         return dictionary
-            
-       
     }
-
+    
+    //MARK: Networking: Generating dictionaries from JSON
+    
+    func getDictionaryFromJSON(data: Data?) -> [Any]?{
+        do{
+            let json = try JSONSerialization.jsonObject(with: data!, options:[]) as? [Any]
+            return json
+        
+        }catch{
+            print(error)
+            return nil
+        }
+    }
+    
 }
 

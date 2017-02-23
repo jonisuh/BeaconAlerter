@@ -239,7 +239,9 @@ class SettingsTableViewController: UITableViewController, UIPopoverPresentationC
         super.viewWillDisappear(animated)
         print("Returning from settings")
         if (self.isMovingFromParentViewController){
-                       (UIApplication.shared.delegate as! AppDelegate).postSettingsToServer()
+            if((UIApplication.shared.delegate as! AppDelegate).getSettings().automaticSync){
+                (UIApplication.shared.delegate as! AppDelegate).postSettingsToServer()
+            }
         }
     }
 
