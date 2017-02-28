@@ -11,7 +11,7 @@ import CoreData
 
 public class Settings: NSManagedObject {
     
-    static func createSettings(hourMode: String, dateFormat: String, snoozeOn: Bool, snoozeLength: Int, snoozeAmount: Int, alertSound: String, soundVolume: Double, automaticSync: Bool, context: NSManagedObjectContext) -> Settings?{
+    static func createSettings(hourMode: String, dateFormat: String, snoozeOn: Bool, snoozeLength: Int, snoozeAmount: Int, alertSound: String, soundVolume: Double, automaticSync: Bool,beaconID: String, context: NSManagedObjectContext) -> Settings?{
         
         let settingsRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "Settings")
         
@@ -29,6 +29,7 @@ public class Settings: NSManagedObject {
                 settings.alertSound = alertSound
                 settings.soundVolume = soundVolume
                 settings.automaticSync = automaticSync
+                settings.beaconID = beaconID;
                 
                 return settings
             }else{
@@ -70,6 +71,10 @@ public class Settings: NSManagedObject {
         }
         
         if(oldSettings.automaticSync != newSettings["automaticSync"] as? Bool){
+            return true
+        }
+        
+        if(oldSettings.beaconID != newSettings["beaconID"] as? String){
             return true
         }
         return false

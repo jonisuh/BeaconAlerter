@@ -32,20 +32,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         
         UNUserNotificationCenter.current().delegate = self
         
-        var userAcceptedNotifications = false
-        while(!userAcceptedNotifications){
-            UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) {(accepted, error) in
-                if !accepted {
-                    print("Notification access denied.")
-                    let alert = UIAlertController(title: "Notification access denied", message: "You have denied access to notifications. The app heavily depends on notification usage. Please allow the app to use notifications in order to ensure the app works correctly.", preferredStyle: .alert)
-                    
-                    alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
-                    
-                    self.window?.rootViewController?.present(alert, animated: true, completion: nil)
-                }
-                userAcceptedNotifications = accepted
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) {(accepted, error) in
+            if !accepted {
+                print("Notification access denied.")
+                let alert = UIAlertController(title: "Notification access denied", message: "You have denied access to notifications. The app heavily depends on notification usage. Please allow the app to use notifications in order to ensure the app works correctly.", preferredStyle: .alert)
+                
+                alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+                
+                self.window?.rootViewController?.present(alert, animated: true, completion: nil)
             }
         }
+        
         
         do{
             let settingsRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "Settings")
@@ -102,7 +99,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     
     private func initializeSettingsSingleton(){
         do{
-            let settings = Settings.createSettings(hourMode: "24", dateFormat: "dd MMM yyyy", snoozeOn: true, snoozeLength: 5, snoozeAmount: 1, alertSound: "clock", soundVolume: 1.0, automaticSync: true, context: self.container.viewContext)
+            let settings = Settings.createSettings(hourMode: "24", dateFormat: "dd MMM yyyy", snoozeOn: true, snoozeLength: 5, snoozeAmount: 1, alertSound: "clock", soundVolume: 1.0, automaticSync: true, beaconID: "", context: self.container.viewContext)
             print("Settings initialized")
             
             try self.container.viewContext.save()
@@ -616,6 +613,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
                                         settings.hourMode = settingsDictionary["hourMode"] as? String
                                         settings.dateFormat = settingsDictionary["dateFormat"] as? String
                                         settings.automaticSync = (settingsDictionary["automaticSync"] as? Bool)!
+                                        settings.beaconID = (settingsDictionary["beaconID"] as? String)!
                                         
                                         try self.container.viewContext.save()
                                     }
@@ -700,7 +698,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     func getSettingsAsDictionary() -> [String: Any]{
         let settings = self.getSettings()
             
-        let dictionary: [String: Any] = ["alertSound":settings.alertSound!,"hourMode":settings.hourMode!,"snoozeOn":settings.snoozeOn,"snoozeLength":settings.snoozeLength,"snoozeAmount":settings.snoozeAmount,"soundVolume":settings.soundVolume,"automaticSync":settings.automaticSync,"dateFormat":settings.dateFormat]
+        let dictionary: [String: Any] = ["alertSound":settings.alertSound!,"hourMode":settings.hourMode!,"snoozeOn":settings.snoozeOn,"snoozeLength":settings.snoozeLength,"snoozeAmount":settings.snoozeAmount,"soundVolume":settings.soundVolume,"automaticSync":settings.automaticSync,"dateFormat":settings.dateFormat,"beaconID":settings.beaconID!]
         
         return dictionary
     }
