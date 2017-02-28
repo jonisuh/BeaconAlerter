@@ -67,7 +67,7 @@ public class Alert: NSManagedObject {
     }
     
     static func createAlertFrom(json: [String: Any], context: NSManagedObjectContext) -> Alert?{
-        //Checking if an alert with this id already exists
+        
         if let title = json["title"] as? String, let id = json["id"] as? String, let time = json["time"] as? String, let repeating = json["repeating"] as? Bool, let isEnabled = json["isEnabled"] as? Bool, let days = json["days"] as? [String: Bool] {
             
             let alertRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "Alert")

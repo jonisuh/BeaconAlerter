@@ -204,8 +204,6 @@ class AlertTableViewController: UITableViewController, NSFetchedResultsControlle
             let section = indexPath.section
             
             print("delete")
-            print(section)
-            print(fetchedResultsController.sections?[section].numberOfObjects)
             
             if(fetchedResultsController.sections?[section].numberOfObjects == 1 && fetchedResultsController.sections?.count != 1){
                 print("deleting")
@@ -223,6 +221,7 @@ class AlertTableViewController: UITableViewController, NSFetchedResultsControlle
             //Delete the alert from the server is automatic sync is on
             if((UIApplication.shared.delegate as! AppDelegate).getSettings().automaticSync){
                 (UIApplication.shared.delegate as! AppDelegate).deleteAlertFromServer(alert: alertToDelete)
+                print("deleteTest1")
             }
             
             do {

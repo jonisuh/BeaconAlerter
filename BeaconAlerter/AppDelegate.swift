@@ -133,7 +133,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     }
 
     func applicationWillEnterForeground(_ application: UIApplication) {
-        self.synchronizeDeviceWithServer(notifyUser: false)
+        if(self.getSettings().automaticSync){
+            self.synchronizeDeviceWithServer(notifyUser: false)
+        }
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
@@ -519,7 +521,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
                         if let alertsDictionary = self.getDictionaryFromJSON(data: data){
                             for item in alertsDictionary{
                                 if let singleAlertDictionary = item as? [String: Any]{
-                                    Alert.createAlertFrom(json: singleAlertDictionary, context: self.container.viewContext)
+                                    let alert = Alert.createAlertFrom(json: singleAlertDictionary, context: self.container.viewContext)
+                                    self.rescheduleNotification(alert: alert!)
                                 }
                             }
                             try self.container.viewContext.save()
@@ -545,12 +548,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         let session = URLSession(configuration: URLSessionConfiguration.default)
         session.dataTask(with: request, completionHandler: {( data, response, error) in
             if let httpResponse = response as? HTTPURLResponse{
-                print("Deleted alert \(alert.id!) from server with code: \(httpResponse.statusCode)")
+                //print("Deleted alert \(alert.id!) from server with code: \(httpResponse.statusCode)")
                 if let error = error {
                     print(error)
                 }
             }
         }).resume()
+        print("deleteTest2")
     }
     
     
