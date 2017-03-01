@@ -207,7 +207,7 @@ class AlertTableViewController: UITableViewController, NSFetchedResultsControlle
             
             if(fetchedResultsController.sections?[section].numberOfObjects == 1 && fetchedResultsController.sections?.count != 1){
                 print("deleting")
-                var indexSet = NSIndexSet(index: section)
+                let indexSet = NSIndexSet(index: section)
                 self.context.delete(alertToDelete)
                 print("deleting section")
                 self.alertTableView.deleteSections(indexSet as IndexSet, with: UITableViewRowAnimation.fade)

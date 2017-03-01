@@ -613,7 +613,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
                                         settings.hourMode = settingsDictionary["hourMode"] as? String
                                         settings.dateFormat = settingsDictionary["dateFormat"] as? String
                                         settings.automaticSync = (settingsDictionary["automaticSync"] as? Bool)!
-                                        settings.beaconID = (settingsDictionary["beaconID"] as? String)!
+                                        settings.beaconID = (settingsDictionary["beaconID"] as? String) ?? ""
                                         
                                         try self.container.viewContext.save()
                                     }

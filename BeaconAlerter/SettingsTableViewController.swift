@@ -226,19 +226,39 @@ class SettingsTableViewController: UITableViewController, UIPopoverPresentationC
                 controller.preferredContentSize = CGSize(width: 450, height: 470)
                 
             }
+        case "selectBeaconID":
+            if let controller = segue.destination as? SelectBeaconViewController {
+                controller.popoverPresentationController!.delegate = self
+                controller.popoverPresentationController!.sourceView = self.view
+                controller.popoverPresentationController!.sourceRect = CGRect(x: self.view.bounds.midX-100, y: self.view.bounds.midY-50, width: 0, height: 0)
+                controller.popoverPresentationController!.permittedArrowDirections = UIPopoverArrowDirection(rawValue: 0)
+                controller.preferredContentSize = CGSize(width: 450, height: 470)
+                
+            }
+        case "beaconTest":
+            if let controller = segue.destination as? eddystoneTestViewController {
+                controller.popoverPresentationController!.delegate = self
+                controller.popoverPresentationController!.sourceView = self.view
+                controller.popoverPresentationController!.sourceRect = CGRect(x: self.view.bounds.midX-100, y: self.view.bounds.midY-50, width: 0, height: 0)
+                controller.popoverPresentationController!.permittedArrowDirections = UIPopoverArrowDirection(rawValue: 0)
+                controller.preferredContentSize = CGSize(width: 450, height: 470)
+                
+            }
         default:
             print(segue.identifier!)
         }
     }
+    
     func returnFromPopover(){
         updateViews()
         saveSettings()
     }
     
+    
     override func viewWillDisappear(_ animated : Bool) {
         super.viewWillDisappear(animated)
-        print("Returning from settings")
         if (self.isMovingFromParentViewController){
+            print("Returning from settings")
             if((UIApplication.shared.delegate as! AppDelegate).getSettings().automaticSync){
                 (UIApplication.shared.delegate as! AppDelegate).postSettingsToServer()
             }

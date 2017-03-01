@@ -34,6 +34,7 @@
 		6A70663D1E554C7B002CB873 /* AlertPopupViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A70663C1E554C7B002CB873 /* AlertPopupViewController.swift */; };
 		6AB057FC1E5A70EA0026A192 /* SelectAlertSoundViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AB057FB1E5A70EA0026A192 /* SelectAlertSoundViewController.swift */; };
 		6AD7B66F1E662BE300E7CD6F /* SelectBeaconViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AD7B66E1E662BE300E7CD6F /* SelectBeaconViewController.swift */; };
+		6AD7B6771E67433B00E7CD6F /* eddystoneTestViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AD7B6761E67433B00E7CD6F /* eddystoneTestViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -66,6 +67,7 @@
 		6A70663C1E554C7B002CB873 /* AlertPopupViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AlertPopupViewController.swift; sourceTree = "<group>"; };
 		6AB057FB1E5A70EA0026A192 /* SelectAlertSoundViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SelectAlertSoundViewController.swift; sourceTree = "<group>"; };
 		6AD7B66E1E662BE300E7CD6F /* SelectBeaconViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SelectBeaconViewController.swift; sourceTree = "<group>"; };
+		6AD7B6761E67433B00E7CD6F /* eddystoneTestViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = eddystoneTestViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -121,6 +123,7 @@
 			children = (
 				6A7066181E4EB3AB002CB873 /* AppDelegate.swift */,
 				6AD7B66E1E662BE300E7CD6F /* SelectBeaconViewController.swift */,
+				6AD7B6761E67433B00E7CD6F /* eddystoneTestViewController.swift */,
 				6A70662F1E4FA3D7002CB873 /* AlertTableViewController.swift */,
 				6A0E95DC1E58F29C001DCB4B /* SettingsTableViewController.swift */,
 				6A0E95DE1E5A2AE7001DCB4B /* SettingsPickerViewController.swift */,
@@ -172,6 +175,7 @@
 					6A7066141E4EB3AB002CB873 = {
 						CreatedOnToolsVersion = 8.1;
 						DevelopmentTeam = MBZ6VYB268;
+						LastSwiftMigration = 0810;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -227,6 +231,7 @@
 				6AD7B66F1E662BE300E7CD6F /* SelectBeaconViewController.swift in Sources */,
 				6A7066191E4EB3AB002CB873 /* AppDelegate.swift in Sources */,
 				6A2FF6111E5B55F800C2393E /* SoundsTableViewCell.swift in Sources */,
+				6AD7B6771E67433B00E7CD6F /* eddystoneTestViewController.swift in Sources */,
 				6A70662C1E4EC226002CB873 /* Model.xcdatamodeld in Sources */,
 				6A0E95DA1E581226001DCB4B /* Settings+CoreDataClass.swift in Sources */,
 				6A7066381E52218F002CB873 /* MoreActionsViewController.swift in Sources */,
@@ -362,7 +367,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = test.BeaconAlerter;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_VERSION = 3.0;
+				SWIFT_VERSION = 3.0.1;
 			};
 			name = Debug;
 		};
@@ -376,7 +381,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = test.BeaconAlerter;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_VERSION = 3.0;
+				SWIFT_VERSION = 3.0.1;
 			};
 			name = Release;
 		};
