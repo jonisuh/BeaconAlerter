@@ -99,7 +99,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     
     private func initializeSettingsSingleton(){
         do{
-            let settings = Settings.createSettings(hourMode: "24", dateFormat: "dd MMM yyyy", snoozeOn: true, snoozeLength: 5, snoozeAmount: 1, alertSound: "clock", soundVolume: 1.0, automaticSync: true, beaconID: "", context: self.container.viewContext)
+            let settings = Settings.createSettings(hourMode: "24", dateFormat: "dd MMM yyyy", snoozeOn: true, snoozeLength: 5, snoozeAmount: 1, alertSound: "clock", soundVolume: 1.0, automaticSync: true, beaconID: "No beacon ID selected", context: self.container.viewContext)
             print("Settings initialized")
             
             try self.container.viewContext.save()
@@ -613,7 +613,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
                                         settings.hourMode = settingsDictionary["hourMode"] as? String
                                         settings.dateFormat = settingsDictionary["dateFormat"] as? String
                                         settings.automaticSync = (settingsDictionary["automaticSync"] as? Bool)!
-                                        settings.beaconID = (settingsDictionary["beaconID"] as? String) ?? ""
+                                        settings.beaconID = (settingsDictionary["beaconID"] as? String) ?? "No beacon selected"
                                         
                                         try self.container.viewContext.save()
                                     }

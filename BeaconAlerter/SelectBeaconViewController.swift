@@ -13,22 +13,38 @@ class SelectBeaconViewController: UIViewController, CBCentralManagerDelegate, CB
     var manager: CBCentralManager!
     var peripheral: CBPeripheral!
     
-    var beacons: [String: CBPeripheral]?
-    var beaconNames: [String]?
-    
+    @IBOutlet weak var startScanButton: UIButton!
     @IBOutlet weak var beaconTableView: UITableView!
+    @IBOutlet weak var scanIndicator: UIActivityIndicatorView!
+    
+    var beacons: [String: BeaconInfo]?
+    var beaconIDs: [String]?
+    
+    var isScanning: Bool!
+    var stopScanningTask: DispatchWorkItem!
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        print("asd")
-        
+       
         self.beaconTableView.delegate = self
         self.beaconTableView.dataSource = self
         
-        self.beacons = [String: CBPeripheral]()
-        self.beaconNames = [String]()
+        self.beacons = [String: BeaconInfo]()
+        self.beaconIDs = [String]()
         
         self.manager = CBCentralManager(delegate: self, queue: nil)
+        
+        self.startScanButton.isEnabled = false
+        self.isScanning = false
+        self.scanIndicator.isHidden = true
+        
+        self.stopScanningTask = DispatchWorkItem{
+            print("Stopping scan")
+            self.startScanButton.setTitle("Scan", for: .normal)
+            self.manager.stopScan()
+            self.scanIndicator.isHidden = true
+            self.isScanning = false
+        }
         // Do any additional setup after loading the view.
     }
 
@@ -38,75 +54,103 @@ class SelectBeaconViewController: UIViewController, CBCentralManagerDelegate, CB
     }
     //MARK: TableView
     func numberOfSections(in tableView: UITableView) -> Int {
-        return 1
+        let sections = 1
+        
+        if(beaconIDs?.count == 0){
+            let rect = CGRect(x: 0, y: 0, width: self.beaconTableView.bounds.size.width, height: self.beaconTableView.bounds.size.height)
+            let noDataLabel: UILabel = UILabel(frame: rect)
+            noDataLabel.text = "No beacons found"
+            noDataLabel.textColor = UIColor.blue
+            noDataLabel.textAlignment = NSTextAlignment.center
+            self.beaconTableView.backgroundView = noDataLabel
+        }else{
+            self.beaconTableView.backgroundView = nil
+        }
+        
+        return sections
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return (self.beaconNames?.count)!
+        return (self.beaconIDs?.count)!
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "alertSoundCell", for: indexPath) as! SoundsTableViewCell
+        let cell = tableView.dequeueReusableCell(withIdentifier: "beaconCell", for: indexPath) as! BeaconTableViewCell
         
         // Configure the cell...
-        cell.soundNameLabel.text = self.beaconNames?[indexPath.row]
-        cell.soundNameLabel.textColor = UIColor.init(colorLiteralRed: 121/255, green: 143/255, blue: 255/255, alpha: 1)
+        let beaconName = self.beaconIDs?[indexPath.row]
+        let beaconInfo = self.beacons?[beaconName!]
+        
+        cell.beaconIDLabel.text = beaconName
+        
+        cell.beaconIDLabel.textColor = UIColor.init(colorLiteralRed: 121/255, green: 143/255, blue: 255/255, alpha: 1)
+        
+        let range = "\(beaconInfo?.RSSI ?? 0)"
+        cell.rangeLabel.text = range
+        
+        cell.deviceNameLabel.text = beaconInfo?.deviceName
+        cell.deviceNameLabel.textColor = UIColor.init(colorLiteralRed: 121/255, green: 143/255, blue: 255/255, alpha: 1)
         return cell
+
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let name = self.beaconNames?[indexPath.row]
-        
-        let beacon = self.beacons?[name!]
-        
-        print(beacon?.name)
-        print(beacon?.readRSSI())
-        print(beacon?.state)
-        for service in (beacon?.services)!{
-            print(service)
+        if(isScanning == true){
+            //Stops scanning -> updating table view, if user selects a row
+            startScan(sender: startScanButton)
         }
-        
     }
     
     func centralManagerDidUpdateState(_ central: CBCentralManager) {
         if central.state == CBManagerState.poweredOn{
-            central.scanForPeripherals(withServices: nil, options: nil)
+            startScanButton.isEnabled = true
         } else {
             print("Bluetooth not available")
         }
     }
     
     func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
-       // peripheral.discoverServices(nil)
         
-        if let deviceName = advertisementData[CBAdvertisementDataLocalNameKey] as? String{
-            //if(!(self.beaconNames?.contains(deviceName))!){
+
+        if let servicedata = advertisementData[CBAdvertisementDataServiceDataKey] as? [NSObject: AnyObject]{
+            var eft: BeaconInfo.EddystoneFrameType
+            eft = BeaconInfo.frameTypeForFrame(advertisementFrameList: servicedata)
+            
+            
+            if eft == BeaconInfo.EddystoneFrameType.UIDFrameType {
                 print("______________________________")
-                print(RSSI)
-                for data in advertisementData{
-                    print(data)
-                }
-                
-                if let serviceuuids = advertisementData[CBAdvertisementDataServiceUUIDsKey] as? NSArray{
-                    print("serviceUUIDS")
-                    for uuid in serviceuuids{
-                        print(uuid)
+                let telemetry = NSData()
+                let serviceUUID = CBUUID(string: "FEAA")
+                let _RSSI: Int = RSSI.intValue
+                let deviceName = advertisementData[CBAdvertisementDataLocalNameKey] as? String ?? ""
+                    
+                if let beaconServiceData = servicedata[serviceUUID] as? NSData, let beaconInfo = BeaconInfo.beaconInfoForUIDFrameData(frameData: beaconServiceData, telemetry: telemetry, RSSI: _RSSI, deviceName: deviceName){
+                    let beaconID = BeaconInfo.hexaDecimalString(from: beaconInfo.beaconID.beaconID)
+                    print(beaconID)
+                    
+                    if(!(self.beaconIDs?.contains(beaconID))!){
+                        self.beaconIDs?.append(beaconID)
+                        self.beacons?[beaconID] = beaconInfo
+                        self.beaconTableView.reloadData()
+                    }else{
+                        self.beacons?[beaconID] = beaconInfo
+                        self.beaconTableView.reloadData()
                     }
+                    
+                }else{
+                    print("Something went wrong with data parsing")
                 }
-                
-                if let servicedata = advertisementData[CBAdvertisementDataServiceDataKey] as? String{
-                    print("servicedata")
-                    print(servicedata)
-                }
-                
                 print("______________________________")
-                //self.manager.stopScan()
-              //  self.beaconNames?.append(deviceName)
-               // self.beacons?[deviceName] = peripheral
-              //  self.beaconTableView.reloadData()
-           // }
+                
+            }else{
+                
+            }
+        }else{
+           // print("Can't create service data")
         }
+        
     }
+    
     
     @IBAction func cancel(_ sender: Any) {
         manager.stopScan()
@@ -114,7 +158,53 @@ class SelectBeaconViewController: UIViewController, CBCentralManagerDelegate, CB
     }
     
     
-
+    
+    @IBAction func startScan(_ sender: Any) {
+        if(!self.isScanning){
+            self.startScanButton.setTitle("Stop", for: .normal)
+            self.manager.scanForPeripherals(withServices: nil, options: nil)
+            self.scanIndicator.startAnimating()
+            self.scanIndicator.isHidden = false
+            
+            self.beaconIDs = [String]()
+            self.beacons = [String: BeaconInfo]()
+            self.beaconTableView.reloadData()
+            
+            self.isScanning = true
+            self.stopScanningTask.cancel()
+            self.stopScanningTask = DispatchWorkItem{
+                print("Stopping scan")
+                self.startScanButton.setTitle("Scan", for: .normal)
+                self.manager.stopScan()
+                self.scanIndicator.isHidden = true
+                self.isScanning = false
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(30), execute: stopScanningTask)
+        
+            
+        }else{
+            self.startScanButton.setTitle("Scan", for: .normal)
+            self.manager.stopScan()
+            self.scanIndicator.isHidden = true
+            self.isScanning = false
+            
+            self.stopScanningTask.cancel()
+        }
+    }
+    
+    @IBAction func selectBeacon(_ sender: Any) {
+        if let selectedRow = self.beaconTableView.indexPathForSelectedRow{
+            let selectedBeaconID = self.beaconIDs?[selectedRow.row]
+            
+            let parent = self.popoverPresentationController?.delegate as! SettingsTableViewController
+            
+            parent.settings?.beaconID = selectedBeaconID
+            parent.returnFromPopover()
+            
+            self.dismiss(animated: true, completion: nil)
+        }
+    }
+    
     /*
     // MARK: - Navigation
 

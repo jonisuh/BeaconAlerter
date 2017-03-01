@@ -27,6 +27,9 @@ class SettingsTableViewController: UITableViewController, UIPopoverPresentationC
     
     @IBOutlet weak var syncSwitch: UISwitch!
     
+    @IBOutlet weak var beaconIDButton: UIButton!
+    
+    
     var settings: Settings?
     
     override func viewDidLoad() {
@@ -79,6 +82,9 @@ class SettingsTableViewController: UITableViewController, UIPopoverPresentationC
             
             //Sync config
             syncSwitch.isOn = settingsUnwrapped.automaticSync
+            
+            //BeaconID config
+            beaconIDButton.setTitle(settingsUnwrapped.beaconID, for: .normal)
         }
         
     }
@@ -228,15 +234,6 @@ class SettingsTableViewController: UITableViewController, UIPopoverPresentationC
             }
         case "selectBeaconID":
             if let controller = segue.destination as? SelectBeaconViewController {
-                controller.popoverPresentationController!.delegate = self
-                controller.popoverPresentationController!.sourceView = self.view
-                controller.popoverPresentationController!.sourceRect = CGRect(x: self.view.bounds.midX-100, y: self.view.bounds.midY-50, width: 0, height: 0)
-                controller.popoverPresentationController!.permittedArrowDirections = UIPopoverArrowDirection(rawValue: 0)
-                controller.preferredContentSize = CGSize(width: 450, height: 470)
-                
-            }
-        case "beaconTest":
-            if let controller = segue.destination as? eddystoneTestViewController {
                 controller.popoverPresentationController!.delegate = self
                 controller.popoverPresentationController!.sourceView = self.view
                 controller.popoverPresentationController!.sourceRect = CGRect(x: self.view.bounds.midX-100, y: self.view.bounds.midY-50, width: 0, height: 0)
