@@ -9,9 +9,8 @@
 import UIKit
 import CoreBluetooth
 
-class SelectBeaconViewController: UIViewController, CBCentralManagerDelegate, CBPeripheralDelegate, UITableViewDelegate, UITableViewDataSource  {
+class SelectBeaconViewController: UIViewController, CBCentralManagerDelegate, UITableViewDelegate, UITableViewDataSource  {
     var manager: CBCentralManager!
-    var peripheral: CBPeripheral!
     
     @IBOutlet weak var startScanButton: UIButton!
     @IBOutlet weak var beaconTableView: UITableView!
@@ -23,11 +22,14 @@ class SelectBeaconViewController: UIViewController, CBCentralManagerDelegate, CB
     var isScanning: Bool!
     var stopScanningTask: DispatchWorkItem!
     
+    
     override func viewDidLoad() {
         super.viewDidLoad()
        
         self.beaconTableView.delegate = self
         self.beaconTableView.dataSource = self
+        
+        //self.beaconTableView.frame.size.width = preferredContentSize.width*0.90
         
         self.beacons = [String: BeaconInfo]()
         self.beaconIDs = [String]()
@@ -76,7 +78,6 @@ class SelectBeaconViewController: UIViewController, CBCentralManagerDelegate, CB
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "beaconCell", for: indexPath) as! BeaconTableViewCell
-        
         // Configure the cell...
         let beaconName = self.beaconIDs?[indexPath.row]
         let beaconInfo = self.beacons?[beaconName!]
@@ -86,6 +87,7 @@ class SelectBeaconViewController: UIViewController, CBCentralManagerDelegate, CB
         cell.beaconIDLabel.textColor = UIColor.init(colorLiteralRed: 121/255, green: 143/255, blue: 255/255, alpha: 1)
         
         let range = "\(beaconInfo?.RSSI ?? 0)"
+      
         cell.rangeLabel.text = range
         
         cell.deviceNameLabel.text = beaconInfo?.deviceName
@@ -116,14 +118,14 @@ class SelectBeaconViewController: UIViewController, CBCentralManagerDelegate, CB
             var eft: BeaconInfo.EddystoneFrameType
             eft = BeaconInfo.frameTypeForFrame(advertisementFrameList: servicedata)
             
-            
+            print(RSSI)
             if eft == BeaconInfo.EddystoneFrameType.UIDFrameType {
-                print("______________________________")
                 let telemetry = NSData()
                 let serviceUUID = CBUUID(string: "FEAA")
                 let _RSSI: Int = RSSI.intValue
                 let deviceName = advertisementData[CBAdvertisementDataLocalNameKey] as? String ?? ""
-                    
+                
+                
                 if let beaconServiceData = servicedata[serviceUUID] as? NSData, let beaconInfo = BeaconInfo.beaconInfoForUIDFrameData(frameData: beaconServiceData, telemetry: telemetry, RSSI: _RSSI, deviceName: deviceName){
                     let beaconID = BeaconInfo.hexaDecimalString(from: beaconInfo.beaconID.beaconID)
                     print(beaconID)
@@ -135,12 +137,12 @@ class SelectBeaconViewController: UIViewController, CBCentralManagerDelegate, CB
                     }else{
                         self.beacons?[beaconID] = beaconInfo
                         self.beaconTableView.reloadData()
+                        print("Reloading")
                     }
                     
                 }else{
                     print("Something went wrong with data parsing")
                 }
-                print("______________________________")
                 
             }else{
                 
@@ -153,7 +155,8 @@ class SelectBeaconViewController: UIViewController, CBCentralManagerDelegate, CB
     
     
     @IBAction func cancel(_ sender: Any) {
-        manager.stopScan()
+        self.manager.stopScan()
+        self.stopScanningTask.cancel()
         self.dismiss(animated: true, completion: nil)
     }
     
@@ -200,7 +203,8 @@ class SelectBeaconViewController: UIViewController, CBCentralManagerDelegate, CB
             
             parent.settings?.beaconID = selectedBeaconID
             parent.returnFromPopover()
-            
+            self.manager.stopScan()
+            self.stopScanningTask.cancel()
             self.dismiss(animated: true, completion: nil)
         }
     }

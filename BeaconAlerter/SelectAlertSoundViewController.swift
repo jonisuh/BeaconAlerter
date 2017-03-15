@@ -21,6 +21,8 @@ class SelectAlertSoundViewController: UIViewController, UITableViewDelegate, UIT
         super.viewDidLoad()
         self.alertSoundsTableView.delegate = self
         self.alertSoundsTableView.dataSource = self
+        self.alertSoundsTableView.frame.size.width = preferredContentSize.width*0.90
+        
         // Do any additional setup after loading the view.
         
         self.bundle = Bundle.main

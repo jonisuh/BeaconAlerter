@@ -10,14 +10,15 @@ import UIKit
 import CoreData
 import UserNotifications
 import AVFoundation
+import CoreBluetooth
 
-class AlertPopupViewController: UIViewController {
+class AlertPopupViewController: UIViewController,CBCentralManagerDelegate, CBPeripheralDelegate{
     
     let context = (UIApplication.shared.delegate as! AppDelegate).container.viewContext
     
     @IBOutlet weak var titleLabel: UILabel!
     @IBOutlet weak var timeLabel: UILabel!
-    @IBOutlet weak var descriptionView: UITextView!
+    @IBOutlet weak var descriptionLabel: UILabel!
     @IBOutlet weak var snoozeButton: UIButton!
     
     @IBOutlet weak var closeAlertButton: UIButton!
@@ -25,6 +26,14 @@ class AlertPopupViewController: UIViewController {
     var alert: Alert?
     
     var player: AVAudioPlayer?
+    
+    var manager: CBCentralManager!
+    var peripheral: CBPeripheral!
+    var beaconID: String?
+    
+    var averageRanges: [Int]!
+    var loadingImage: UIImage?
+    var closeAlertImage: UIImage?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -45,8 +54,6 @@ class AlertPopupViewController: UIViewController {
                     UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [self.alertID!])
                 }
             }
-            
-            
             
             do{
                 let alertRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "Alert")
@@ -76,8 +83,30 @@ class AlertPopupViewController: UIViewController {
             }catch{
                 print(error)
             }
+            
+            
+            do{
+                try AVAudioSession.sharedInstance().setCategory(AVAudioSessionCategoryPlayback)
+                try AVAudioSession.sharedInstance().setActive(true)
+            }catch{
+                
+                print(error)
+            }
+            
             playSound()
             changeSnoozeButtonState()
+            
+            self.manager = CBCentralManager(delegate: self, queue: nil)
+            self.beaconID = (UIApplication.shared.delegate as! AppDelegate).getSettings().beaconID
+            
+            
+            
+            self.closeAlertButton.isEnabled = false
+            let bgImage = UIImage(named: "alert_off_disabled.png")
+            self.closeAlertButton.setBackgroundImage(bgImage, for: .normal)
+            self.descriptionLabel.text = "Scanning for beacon..."
+            averageRanges = [Int]()
+            
         }
         
         // Do any additional setup after loading the view.
@@ -115,6 +144,30 @@ class AlertPopupViewController: UIViewController {
         }
     }
     
+    let maxRangeCount = 5;
+    func addRangeToAverages(range: Int){
+        if(averageRanges.count < maxRangeCount){
+            averageRanges.append(range)
+        }else{
+            for i in 1...maxRangeCount-1{
+                averageRanges[i-1] = averageRanges[i]
+            }
+            averageRanges[maxRangeCount-1] = range
+        }
+    }
+    
+    func getCurrentAverageRange() -> Int{
+        if(averageRanges.count < maxRangeCount){
+            return -1000
+        }else{
+            var aveTotal = 0
+            for ratio in averageRanges{
+                aveTotal = aveTotal + ratio
+            }
+            return aveTotal / averageRanges.count
+        }
+    }
+    
     func changeSnoozeButtonState(){
         let snoozeEnabled = (UIApplication.shared.delegate as! AppDelegate).getSettings().snoozeOn
         let maxSnoozes = (UIApplication.shared.delegate as! AppDelegate).getSettings().snoozeAmount
@@ -141,16 +194,6 @@ class AlertPopupViewController: UIViewController {
         
         print(self.snoozeButton.isEnabled)
     }
-
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destinationViewController.
-        // Pass the selected object to the new view controller.
-    }
-    */
     
     //MARK: Actions
     @IBAction func snoozeClicked(_ sender: UIButton) {
@@ -162,6 +205,7 @@ class AlertPopupViewController: UIViewController {
     
     private func scheduleNooze(){
         do{
+            self.manager.stopScan()
             //Getting sound and snooze length from settings
             let soundName = (UIApplication.shared.delegate as! AppDelegate).getSettings().alertSound!
             let sound = UNNotificationSound.init(named: soundName+".wav")
@@ -209,7 +253,7 @@ class AlertPopupViewController: UIViewController {
     //Closes the alert and removes one time alerts
     @IBAction func closeAlert(_ sender: Any) {
         stopSound()
-        
+        self.manager.stopScan()
         if let alertToBeChecked = self.alert{
             if(!alertToBeChecked.repeating){
                 (UIApplication.shared.delegate as! AppDelegate).cancelNotification(alert: alertToBeChecked)
@@ -226,5 +270,62 @@ class AlertPopupViewController: UIViewController {
         self.dismiss(animated: true, completion: nil)
     }
     
+    //MARK: Bluetooth delegate
+    func centralManagerDidUpdateState(_ central: CBCentralManager) {
+        if central.state == CBManagerState.poweredOn{
+            self.manager.scanForPeripherals(withServices: nil, options: nil)
+        } else {
+            print("Bluetooth not available")
+        }
+    }
     
+    func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
+        
+        
+        if let servicedata = advertisementData[CBAdvertisementDataServiceDataKey] as? [NSObject: AnyObject]{
+            var eft: BeaconInfo.EddystoneFrameType
+            eft = BeaconInfo.frameTypeForFrame(advertisementFrameList: servicedata)
+            
+            
+            if eft == BeaconInfo.EddystoneFrameType.UIDFrameType {
+                let telemetry = NSData()
+                let serviceUUID = CBUUID(string: "FEAA")
+                let _RSSI: Int = RSSI.intValue
+                let deviceName = advertisementData[CBAdvertisementDataLocalNameKey] as? String ?? ""
+                
+                if let beaconServiceData = servicedata[serviceUUID] as? NSData, let beaconInfo = BeaconInfo.beaconInfoForUIDFrameData(frameData: beaconServiceData, telemetry: telemetry, RSSI: _RSSI, deviceName: deviceName){
+                    let discoveredBeaconID = BeaconInfo.hexaDecimalString(from: beaconInfo.beaconID.beaconID)
+                    
+                    
+                    if(discoveredBeaconID == self.beaconID){
+                        //print(beaconInfo.RSSI)
+                        var RSSI = beaconInfo.RSSI
+                        var txPower = beaconInfo.txPower
+                        
+                        addRangeToAverages(range: RSSI)
+                        print(getCurrentAverageRange())
+                        
+                        if(getCurrentAverageRange() > txPower-41){
+                            self.closeAlertButton.isEnabled = true
+                            let bgImage = UIImage(named: "alert_off_enabled.png")
+                            self.closeAlertButton.setBackgroundImage(bgImage, for: .normal)
+                            self.descriptionLabel.text = "Beacon found!"
+                        }else{
+                            /* self.closeAlertButton.isEnabled = false
+                            self.descriptionLabel.text = "Scanning for beacon..." */
+                        }
+                    }
+                    
+                }else{
+                    print("Something went wrong with data parsing")
+                }
+                
+            }else{
+                
+            }
+        }else{
+            // print("Can't create service data")
+        }
+        
+    }
 }

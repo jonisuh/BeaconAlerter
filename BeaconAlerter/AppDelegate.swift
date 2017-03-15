@@ -82,13 +82,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         let delegate = navigationController?.childViewControllers[0]
         
         let alertPopupController = delegate?.storyboard?.instantiateViewController(withIdentifier: "AlertPopupViewController") as? AlertPopupViewController
-        alertPopupController?.modalPresentationStyle = .popover;
-        alertPopupController?.preferredContentSize = CGSize(width: 600, height: 400)
+        alertPopupController?.modalPresentationStyle = .popover
+        
+        let screen = UIScreen.main.bounds
+        let screenWidth = screen.size.width * 0.90
+        alertPopupController?.preferredContentSize = CGSize(width: screenWidth, height: 450)
         
         let popover = alertPopupController?.popoverPresentationController
-        
         popover?.sourceView = delegate?.view
-        popover?.sourceRect = CGRect(x: delegate!.view.bounds.midX-100, y: delegate!.view.bounds.midY-50, width: 0, height: 0)
+        popover?.sourceRect = CGRect(x: delegate!.view.bounds.midX, y: delegate!.view.bounds.midY-50, width: 0, height: 0)
         popover?.permittedArrowDirections = UIPopoverArrowDirection(rawValue: 0)
         popover?.delegate = delegate as! UIPopoverPresentationControllerDelegate?
         
@@ -191,12 +193,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
             newComponents = DateComponents()
             newComponents.hour = components.hour
             newComponents.minute = components.minute
+            newComponents.second = 0
             //Debug
+            /*
             let debugdate = Date()
             let debugcomponents = calendar.dateComponents(in: .current, from: debugdate)
             
             newComponents.second = debugcomponents.second!+3
-            
+            */
             
             newComponents.timeZone = .current
             trigger = UNCalendarNotificationTrigger(dateMatching: newComponents, repeats: true)
@@ -400,8 +404,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     
     //MARK: Networking - synchronizing
     func synchronizeDeviceWithServer(notifyUser: Bool){
-        self.showSyncToUser = notifyUser
-        self.updateSyncAlert(amount: 0)
+        //self.showSyncToUser = notifyUser
+        //self.updateSyncAlert(amount: 0)
+        if(notifyUser){
+            self.alert = UIAlertController(title: "Synchronization", message: "Synchronization started. Settings and alerts may get modified on your device during the synchronization.", preferredStyle: .alert)
+            
+            self.alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+            self.window?.rootViewController?.present(self.alert, animated: true, completion: nil)
+        }
         self.getSettingsFromServer()
         self.getAlertsFromServer()
     }
@@ -514,6 +524,53 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
                     print(error)
                 }else{
                     do{
+                        if let alertsDictionary = self.getDictionaryFromJSON(data: data){
+                            
+                            //Deleting all current alerts
+                            let alertRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "Alert")
+                            
+                            let alerts = try self.container.viewContext.fetch(alertRequest) as! [Alert]
+                            for alert in alerts{
+                               self.container.viewContext.delete(alert)
+                            }
+                            try self.container.viewContext.save()
+                            for item in alertsDictionary{
+                                if let singleAlertDictionary = item as? [String: Any]{
+                                    let alert = Alert.createAlertFrom(json: singleAlertDictionary, context: self.container.viewContext)
+                                    print("New alert \(alert?.id, alert?.time)")
+                                    if(alert?.isEnabled)!{
+                                        self.rescheduleNotification(alert: alert!)
+                                    }
+                                    
+                                    
+                                }
+                            }
+                            try self.container.viewContext.save()
+                        }
+                    }catch{
+                        print(error)
+                    }
+                }
+            }
+        }).resume()
+    }
+    
+    /*
+    func getAlertsFromServer(){
+        let urlString = "http://beaconalerter.herokuapp.com/api/alerts/"
+        let url = URL(string: urlString)
+        
+        var request = URLRequest(url: url!)
+        request.httpMethod = "GET"
+        
+        let session = URLSession(configuration: URLSessionConfiguration.default)
+        session.dataTask(with: request, completionHandler: {( data, response, error) in
+            if let httpResponse = response as? HTTPURLResponse{
+                print("Queried alerts from server with code: \(httpResponse.statusCode)")
+                if let error = error {
+                    print(error)
+                }else{
+                    do{
                         DispatchQueue.main.async {self.updateSyncAlert(amount: 15)}
                         if let alertsDictionary = self.getDictionaryFromJSON(data: data){
                             for item in alertsDictionary{
@@ -533,7 +590,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
                 }
             }
         }).resume()
-    }
+    }*/
     
     func deleteAlertFromServer(alert: Alert){
         let urlString = "http://beaconalerter.herokuapp.com/api/alerts/"+alert.id!
@@ -551,7 +608,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
                 }
             }
         }).resume()
-        print("deleteTest2")
     }
     
     
@@ -595,7 +651,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
                 if let error = error {
                     print(error)
                 }else{
-                    DispatchQueue.main.async {self.updateSyncAlert(amount: 15)}
+                    //DispatchQueue.main.async {self.updateSyncAlert(amount: 15)}
                     if let settingsData = self.getDictionaryFromJSON(data: data){
                         
                         for item in settingsData{
@@ -604,7 +660,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
                                 
                                 do{
                                     let settings = self.getSettings()
-                                    if(Settings.settingsHaveChanged(newSettings: settingsDictionary, oldSettings: settings)){
+                                    //if(Settings.settingsHaveChanged(newSettings: settingsDictionary, oldSettings: settings)){
                                         settings.alertSound = settingsDictionary["alertSound"] as? String
                                         settings.soundVolume = (settingsDictionary["soundVolume"] as? Double)!
                                         settings.snoozeOn = (settingsDictionary["snoozeOn"] as? Bool)!
@@ -616,15 +672,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
                                         settings.beaconID = (settingsDictionary["beaconID"] as? String) ?? "No beacon selected"
                                         
                                         try self.container.viewContext.save()
-                                    }
-                                    DispatchQueue.main.async {self.updateSyncAlert(amount: 15)}
+                                    //}
+                                    //DispatchQueue.main.async {self.updateSyncAlert(amount: 15)}
                                 }catch{
                                     print(error)
                                 }
                             }
                         }
                     }
-                    DispatchQueue.main.async {self.updateSyncAlert(amount: 20)}
+                    //DispatchQueue.main.async {self.updateSyncAlert(amount: 20)}
                 }
             }
         }).resume()

@@ -304,7 +304,11 @@ class AlertTableViewController: UITableViewController, NSFetchedResultsControlle
                 controller.popoverPresentationController!.sourceView = self.view
                 controller.popoverPresentationController!.sourceRect = CGRect(x: self.view.bounds.midX-100, y: self.view.bounds.midY-50, width: 0, height: 0)
                 controller.popoverPresentationController!.permittedArrowDirections = UIPopoverArrowDirection(rawValue: 0)
-                controller.preferredContentSize = CGSize(width: 600, height: 450)
+                
+                let screen = UIScreen.main.bounds
+                let screenWidth = screen.size.width * 0.95
+                
+                controller.preferredContentSize = CGSize(width: screenWidth, height: 450)
                 
                 if(segue.identifier == "showAlertEdit"){
                     let path = self.alertTableView.indexPathForSelectedRow!

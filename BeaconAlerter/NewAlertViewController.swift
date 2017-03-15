@@ -64,6 +64,11 @@ class NewAlertViewController: UIViewController, UITextFieldDelegate {
     }
 
     func createAlertModeViews(repeating: Bool){
+        let width = preferredContentSize.width*0.90
+        oneTimeDatePicker.frame.size.width = width
+        repeatingTimePicker.frame.size.width = width
+        titleField.frame.size.width = width
+        
         if((UIApplication.shared.delegate as! AppDelegate).getSettings().hourMode == "24"){
             oneTimeDatePicker.locale = Locale.init(identifier: "en_GB")
             repeatingTimePicker.locale = Locale.init(identifier: "en_GB")

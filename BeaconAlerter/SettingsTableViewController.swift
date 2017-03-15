@@ -227,18 +227,24 @@ class SettingsTableViewController: UITableViewController, UIPopoverPresentationC
             if let controller = segue.destination as? SelectAlertSoundViewController {
                 controller.popoverPresentationController!.delegate = self
                 controller.popoverPresentationController!.sourceView = self.view
-                controller.popoverPresentationController!.sourceRect = CGRect(x: self.view.bounds.midX-100, y: self.view.bounds.midY-50, width: 0, height: 0)
+                controller.popoverPresentationController!.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.midY, width: 0, height: 0)
                 controller.popoverPresentationController!.permittedArrowDirections = UIPopoverArrowDirection(rawValue: 0)
-                controller.preferredContentSize = CGSize(width: 450, height: 470)
+                
+                let screen = UIScreen.main.bounds
+                let screenWidth = screen.size.width * 0.95
+                controller.preferredContentSize = CGSize(width: screenWidth, height: 470)
                 
             }
         case "selectBeaconID":
             if let controller = segue.destination as? SelectBeaconViewController {
                 controller.popoverPresentationController!.delegate = self
                 controller.popoverPresentationController!.sourceView = self.view
-                controller.popoverPresentationController!.sourceRect = CGRect(x: self.view.bounds.midX-100, y: self.view.bounds.midY-50, width: 0, height: 0)
+                controller.popoverPresentationController!.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.midY, width: 0, height: 0)
                 controller.popoverPresentationController!.permittedArrowDirections = UIPopoverArrowDirection(rawValue: 0)
-                controller.preferredContentSize = CGSize(width: 450, height: 470)
+                
+                let screen = UIScreen.main.bounds
+                let screenWidth = screen.size.width * 0.95
+                controller.preferredContentSize = CGSize(width: screenWidth, height: 470)
                 
             }
         default:

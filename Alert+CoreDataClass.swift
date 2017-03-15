@@ -138,6 +138,7 @@ public class Alert: NSManagedObject {
         
         //formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZZZZZ"
         formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+         print("stringToDate: \(formatter.date(from: date)!)")
         return formatter.date(from: date)!
     }
     
@@ -146,6 +147,7 @@ public class Alert: NSManagedObject {
         
         //formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:SSSZ"
         formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZZZZZ"
+        print("dateToString: \(formatter.string(from: date))")
         return formatter.string(from: date)
     }
 }

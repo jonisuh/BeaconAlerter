@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6A0B703D1E79058C00491455 /* alert_off_disabled.png in Resources */ = {isa = PBXBuildFile; fileRef = 6A0B703C1E79058C00491455 /* alert_off_disabled.png */; };
+		6A0B703F1E79059F00491455 /* alert_off_enabled.png in Resources */ = {isa = PBXBuildFile; fileRef = 6A0B703E1E79059F00491455 /* alert_off_enabled.png */; };
 		6A0E95DA1E581226001DCB4B /* Settings+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A0E95D81E581226001DCB4B /* Settings+CoreDataClass.swift */; };
 		6A0E95DB1E581226001DCB4B /* Settings+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A0E95D91E581226001DCB4B /* Settings+CoreDataProperties.swift */; };
 		6A0E95DD1E58F29C001DCB4B /* SettingsTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A0E95DC1E58F29C001DCB4B /* SettingsTableViewController.swift */; };
@@ -39,6 +41,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		6A0B703C1E79058C00491455 /* alert_off_disabled.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = alert_off_disabled.png; path = ../alert_off_disabled.png; sourceTree = "<group>"; };
+		6A0B703E1E79059F00491455 /* alert_off_enabled.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = alert_off_enabled.png; path = ../alert_off_enabled.png; sourceTree = "<group>"; };
 		6A0E95D81E581226001DCB4B /* Settings+CoreDataClass.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Settings+CoreDataClass.swift"; sourceTree = "<group>"; };
 		6A0E95D91E581226001DCB4B /* Settings+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Settings+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		6A0E95DC1E58F29C001DCB4B /* SettingsTableViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SettingsTableViewController.swift; sourceTree = "<group>"; };
@@ -102,6 +106,7 @@
 		6A70660C1E4EB3AB002CB873 = {
 			isa = PBXGroup;
 			children = (
+				6AD7B6B11E6CD2E800E7CD6F /* alertimages */,
 				6AD7B6A21E675D8E00E7CD6F /* Eddystone.swift */,
 				6A2FF5FF1E5B4D1900C2393E /* alarms */,
 				6A0E95D81E581226001DCB4B /* Settings+CoreDataClass.swift */,
@@ -145,6 +150,16 @@
 			path = BeaconAlerter;
 			sourceTree = "<group>";
 		};
+		6AD7B6B11E6CD2E800E7CD6F /* alertimages */ = {
+			isa = PBXGroup;
+			children = (
+				6A0B703E1E79059F00491455 /* alert_off_enabled.png */,
+				6A0B703C1E79058C00491455 /* alert_off_disabled.png */,
+			);
+			name = alertimages;
+			path = ../../Downloads/alertimages;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -180,6 +195,11 @@
 						DevelopmentTeam = MBZ6VYB268;
 						LastSwiftMigration = 0810;
 						ProvisioningStyle = Automatic;
+						SystemCapabilities = {
+							com.apple.BackgroundModes = {
+								enabled = 1;
+							};
+						};
 					};
 				};
 			};
@@ -213,9 +233,11 @@
 				6A7066231E4EB3AB002CB873 /* LaunchScreen.storyboard in Resources */,
 				6A2FF60A1E5B4D1900C2393E /* clock.wav in Resources */,
 				6A2FF6081E5B4D1900C2393E /* alarm.wav in Resources */,
+				6A0B703F1E79059F00491455 /* alert_off_enabled.png in Resources */,
 				6A7066201E4EB3AB002CB873 /* Assets.xcassets in Resources */,
 				6A2FF60F1E5B4D1900C2393E /* windmill.wav in Resources */,
 				6A2FF60E1E5B4D1900C2393E /* oxygen.wav in Resources */,
+				6A0B703D1E79058C00491455 /* alert_off_disabled.png in Resources */,
 				6A2FF60B1E5B4D1900C2393E /* ios7.wav in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -371,6 +393,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = test.BeaconAlerter;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "";
 				SWIFT_VERSION = 3.0.1;
 			};
 			name = Debug;
@@ -385,6 +408,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = test.BeaconAlerter;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "";
 				SWIFT_VERSION = 3.0.1;
 			};
 			name = Release;
